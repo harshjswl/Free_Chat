@@ -31,11 +31,13 @@ sonarqube:
   image: maven:3.9-eclipse-temurin-17
   script:
     - cd backend
-    - mvn sonar:sonar \
-        -Dsonar.projectKey=$SONAR_PROJECT_KEY \
-        -Dsonar.host.url=$SONAR_URL \
-        -Dsonar.login=$SONAR_TOKEN
+    - >
+      mvn sonar:sonar
+      -Dsonar.projectKey=$SONAR_PROJECT_KEY
+      -Dsonar.host.url=$SONAR_URL
+      -Dsonar.login=$SONAR_TOKEN
   allow_failure: false
+
 
 # ---------------- TRIVY SECURITY SCAN ----------------
 trivy_scan:
