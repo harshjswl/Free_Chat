@@ -1,0 +1,12 @@
+server:
+  port: 8080
+
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/textdb
+    username: postgres
+    password: harsh
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
