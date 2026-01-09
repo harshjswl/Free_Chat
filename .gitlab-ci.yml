@@ -1,6 +1,5 @@
 stages:
   - build
-  - test
   - quality
   - security
   - docker
@@ -8,27 +7,30 @@ stages:
 variables:
   SONAR_PROJECT_KEY: "free-chat"
   DOCKER_IMAGE: "$DOCKER_USERNAME/free-chat"
+  MAVEN_OPTS: "-Dmaven.repo.local=.m2/repository"
 
-# ---------------- BUILD ----------------
+# ------------------------------------------------
+# BUILD (Compile + Package)
+# ------------------------------------------------
 build:
   stage: build
   image: maven:3.9-eclipse-temurin-17
   script:
     - cd backend
-    - mvn clean compile
-
-# ---------------- TEST ----------------
-test:
-  stage: test
-  image: maven:3.9-eclipse-temurin-17
-  script:
-    - cd backend
     - mvn clean package -DskipTests
+  artifacts:
+    paths:
+      - backend/target
+    expire_in: 1 hour
 
-# ---------------- SONARQUBE ----------------
+# ------------------------------------------------
+# SONARQUBE QUALITY GATE
+# ------------------------------------------------
 sonarqube:
   stage: quality
   image: maven:3.9-eclipse-temurin-17
+  dependencies:
+    - build
   script:
     - cd backend
     - >
@@ -36,10 +38,12 @@ sonarqube:
       -Dsonar.projectKey=$SONAR_PROJECT_KEY
       -Dsonar.host.url=$SONAR_URL
       -Dsonar.login=$SONAR_TOKEN
+      -Dsonar.java.binaries=target/classes
   allow_failure: false
 
-
-# ---------------- TRIVY SECURITY SCAN ----------------
+# ------------------------------------------------
+# TRIVY SECURITY SCAN (SOURCE CODE)
+# ------------------------------------------------
 trivy_scan:
   stage: security
   image: aquasec/trivy:latest
@@ -49,8 +53,11 @@ trivy_scan:
     when: always
     paths:
       - trivy-report.json
+    expire_in: 7 days
 
-# ---------------- DOCKER BUILD & PUSH ----------------
+# ------------------------------------------------
+# DOCKER BUILD & PUSH (ONLY IF ABOVE PASSES)
+# ------------------------------------------------
 docker_build_push:
   stage: docker
   image: docker:24.0.5
